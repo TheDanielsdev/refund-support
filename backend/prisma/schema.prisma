@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  REFUNDED
+}
+
+enum Decision {
+  APPROVED
+  DENIED
+  ESCALATED
+}
+
+enum ClaimType {
+  CHANGE_OF_MIND
+  DAMAGED
+  WRONG_ITEM
+  NOT_RECEIVED
+  OTHER
+}
+
+model Customer {
+  id             String          @id @default(cuid())
+  name           String
+  email          String          @unique
+  createdAt      DateTime        @default(now())
+  orders         Order[]
+  refundRequests RefundRequest[]
+}
+
+model Order {
+  id             String          @id @default(cuid())
+  orderNumber    String          @unique
+  customerId     String
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  status         OrderStatus
+  placedAt       DateTime
+  deliveredAt    DateTime?
+  totalCents     Int
+  items          OrderItem[]
+  refundRequests RefundRequest[]
+
+  @@index([customerId])
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sku         String
+  name        String
+  priceCents  Int
+  quantity    Int     @default(1)
+  isFinalSale Boolean @default(false)
+}
+
+model RefundRequest {
+  id                String      @id @default(cuid())
+  customerId        String?
+  customer          Customer?   @relation(fields: [customerId], references: [id])
+  orderId           String?
+  order             Order?      @relation(fields: [orderId], references: [id])
+  submittedEmail    String
+  submittedOrderRef String
+  message           String
+  claimType         ClaimType?
+  decision          Decision
+  refundCents       Int         @default(0)
+  reply             String
+  injectionFlagged  Boolean     @default(false)
+  aiUsed            Boolean     @default(false)
+  createdAt         DateTime    @default(now())
+  auditLogs         AuditLog[]
+
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id              String        @id @default(cuid())
+  refundRequestId String
+  refundRequest   RefundRequest @relation(fields: [refundRequestId], references: [id], onDelete: Cascade)
+  step            String
+  detail          Json
+  createdAt       DateTime      @default(now())
+
+  @@index([refundRequestId])
+}

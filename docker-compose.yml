@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-refunds}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-refunds}
+      POSTGRES_DB: ${POSTGRES_DB:-refunds}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-refunds} -d ${POSTGRES_DB:-refunds}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-refunds}:${POSTGRES_PASSWORD:-refunds}@db:5432/${POSTGRES_DB:-refunds}?schema=public
+      PORT: 3001
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+
+  # TODO: enable once /frontend exists
+  # frontend:
+  #   build: ./frontend
+  #   depends_on:
+  #     - backend
+  #   ports:
+  #     - "${FRONTEND_PORT:-5173}:80"
+
+volumes:
+  pgdata:
