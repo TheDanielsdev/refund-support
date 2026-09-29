@@ -26,13 +26,12 @@ services:
     ports:
       - "${BACKEND_PORT:-3001}:3001"
 
-  # TODO: enable once /frontend exists
-  # frontend:
-  #   build: ./frontend
-  #   depends_on:
-  #     - backend
-  #   ports:
-  #     - "${FRONTEND_PORT:-5173}:80"
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
 
 volumes:
   pgdata:

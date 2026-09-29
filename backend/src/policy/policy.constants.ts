@@ -1,0 +1,6 @@
+export const POLICY = {
+  RETURN_WINDOW_DAYS: 30,
+  HUMAN_REVIEW_THRESHOLD_CENTS: 50000, // refunds strictly above $500.00 need review
+  SUSPICIOUS_REFUND_COUNT: 3,
+  SUSPICIOUS_LOOKBACK_DAYS: 60,
+} as const;
